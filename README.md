@@ -17,9 +17,9 @@
 5. [x] startRoutine (id)
        루틴 시작 : 더이상 참가 불가 챌린지 시작 일정에 맞춰 챌린지가 시작됩니다. BackEnd에서
        실행시켜줘야하며 챌린지가 시작되면 더이상의 참가는 불가능합니다.
-6. [ ] endRoutine (id)
+6. [x] endRoutine (id)
        루틴 종료 : 루틴이 종료되고 성공한 참가자들에게 상금을 분배합니다.
-7. [ ] failRoutine (address)
+7. [x] failRoutine (address)
        루틴 실패
 
 ### CALL

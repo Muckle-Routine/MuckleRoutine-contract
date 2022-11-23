@@ -36,6 +36,7 @@ contract MerkleRoutine {
         Status status;
         Term term;
         uint256 participates; //이걸 배열로 해야할까? 그냥 숫자로 해도 되지 않을까?
+        uint256 totalParticipates;
         uint256 amount;
     }
 
@@ -45,6 +46,8 @@ contract MerkleRoutine {
     mapping(uint256 => address) private _routineOwner; // 루틴의 주최자 지갑주소
     mapping(address => uint256[]) private _participateRoutines; // 참가한 루틴id
     mapping(uint256 => address[]) private _routineParticipants; // 참가자 목록
+    mapping(address => uint256) private _participateRoutinesLen;
+    mapping(uint256 => uint256) private _routineParticipantsLen;
 
     /**
      * @dev Owner Make Routine, and Recruiting Participants
@@ -56,6 +59,7 @@ contract MerkleRoutine {
             msg.value,
             Status.Recruiting,
             _term,
+            1,
             1,
             msg.value
         );
@@ -76,7 +80,7 @@ contract MerkleRoutine {
             _routines[id].status == Status.Recruiting,
             "STATUS ERROR : The Routine Is Not Recruiting."
         );
-        for (uint256 i = 0; i < _routines[id].participates - 1; i++) {
+        for (uint256 i = 0; i < _routineParticipantsLen[id]; i++) {
             payable(_routineParticipants[id][i]).transfer(_routines[id].fee);
         }
         _cancelRoutine(id);
@@ -86,7 +90,7 @@ contract MerkleRoutine {
      * @dev Participant Can Cancel Participation Routine
      * @param id Routine Id
      */
-    function CancelParticipateRoutine(uint256 id) external payable {
+    function cancelParticipateRoutine(uint256 id) external payable {
         require(
             _isExistRoutine(id, msg.sender),
             "EXIST ERROR : Routine Is Not Exist."
@@ -117,6 +121,10 @@ contract MerkleRoutine {
             _routines[id].status == Status.Recruiting,
             "STATUS ERROR : The Routine Is Not Recruiting."
         );
+        require(
+            _routineOwner[id] != msg.sender,
+            "PERMISSION ERROR : You Are Owner Of The Routine"
+        );
         _participateRoutine(id);
     }
 
@@ -126,6 +134,42 @@ contract MerkleRoutine {
             "PERMISSION ERROR : You Don't Have Permission."
         );
         _routines[id].status = Status.Ongoing;
+    }
+
+    function failRoutine(address addr, uint256 id) public {
+        require(
+            msg.sender == manager,
+            "PERMISSION ERROR : You Don't Have Permission."
+        );
+        require(
+            _routines[id].status == Status.Ongoing,
+            "STATUS ERROR : The Routine Is Not Ongoing"
+        );
+        _deletePariticipant(id, addr);
+    }
+
+    function endRoutine(uint256 id) public {
+        require(
+            msg.sender == manager,
+            "PERMISSION ERROR : You Don't Have Permission."
+        );
+        uint256 A = _routines[id].amount;
+        uint256 N = _routines[id].totalParticipates;
+        uint256 S = _routines[id].participates;
+        uint256 head = ((N + 1) * (S - 1));
+        uint256 body = (N * (S + 1));
+
+        uint256 OwnersAwards = (A * (body - head)) / body;
+
+        payable(_routineOwner[id]).transfer(OwnersAwards);
+
+        uint256 participantsAwards = (_routines[id].amount - OwnersAwards) /
+            (_routines[id].participates - 1);
+
+        for (uint256 i = 0; i < _routines[id].participates - 1; i++) {
+            payable(_routineParticipants[id][i]).transfer(participantsAwards);
+        }
+        _routines[id].status = Status.End;
     }
 
     /**
@@ -139,11 +183,17 @@ contract MerkleRoutine {
         _totalBalance++;
     }
 
+    function _deletePariticipant(uint256 id, address addr) private {
+        _popParticipateRoutine(id, addr);
+        _popRoutineParticipant(id, addr);
+        _routines[id].participates--;
+        _routineParticipantsLen[id]--;
+    }
+
     function _cancelParticipateRoutine(uint256 id) private {
         _routines[id].amount -= _routines[id].fee;
-        _routines[id].participates--;
-        _popParticipateRoutine(id, msg.sender);
-        _popRoutineParticipant(id, msg.sender);
+        _routines[id].totalParticipates--;
+        _deletePariticipant(id, msg.sender);
     }
 
     /**
@@ -156,7 +206,7 @@ contract MerkleRoutine {
         view
         returns (bool)
     {
-        for (uint256 i = 0; i < _participateRoutines[addr].length; i++) {
+        for (uint256 i = 0; i < _participateRoutinesLen[addr]; i++) {
             if (_participateRoutines[addr][i] == id) {
                 return true;
             }
@@ -169,7 +219,7 @@ contract MerkleRoutine {
         view
         returns (bool)
     {
-        for (uint256 i = 0; i < _routineParticipants[id].length; i++) {
+        for (uint256 i = 0; i < _routineParticipantsLen[id]; i++) {
             if (_routineParticipants[id][i] == addr) {
                 return true;
             }
@@ -184,7 +234,7 @@ contract MerkleRoutine {
     {
         uint256 index = 0;
         require(_isExistRoutine(id, addr), "Routine Is Not Exist.");
-        for (uint256 i = 0; i < _participateRoutines[addr].length; i++) {
+        for (uint256 i = 0; i < _participateRoutinesLen[addr]; i++) {
             if (_participateRoutines[addr][i] == id) {
                 index = i;
             }
@@ -199,7 +249,7 @@ contract MerkleRoutine {
     {
         uint256 index = 0;
         require(_isExistParticipant(id, addr), "Participant Is Not Exist.");
-        for (uint256 i = 0; i < _routineParticipants[id].length; i++) {
+        for (uint256 i = 0; i < _routineParticipantsLen[id]; i++) {
             if (_routineParticipants[id][i] == addr) {
                 index = i;
             }
@@ -211,26 +261,28 @@ contract MerkleRoutine {
         uint256 index = _indexOfRoutineFromAddress(id, addr);
 
         _participateRoutines[addr][index] = _participateRoutines[addr][
-            _participateRoutines[addr].length - 1
+            _participateRoutinesLen[addr] - 1
         ];
-        _participateRoutines[addr].pop();
-        delete _participateRoutines[addr][
-            _participateRoutines[addr].length - 1
-        ];
+        _participateRoutinesLen[addr]--;
+        delete _participateRoutines[addr][_participateRoutinesLen[addr] - 1];
     }
 
     function _popRoutineParticipant(uint256 id, address addr) private {
         uint256 index = _indexOfParticipantFromId(id, addr);
 
         _routineParticipants[id][index] = _routineParticipants[id][
-            _routineParticipants[id].length - 1
+            _routineParticipantsLen[id] - 1
         ];
-        delete _routineParticipants[id][_routineParticipants[id].length - 1];
+        delete _routineParticipants[id][_routineParticipantsLen[id] - 1];
     }
 
     function _participateRoutine(uint256 id) private {
         _routines[id].amount += msg.value;
         _routines[id].participates++;
+        _routineParticipantsLen[id]++;
+        _routines[id].totalParticipates++;
+        _participateRoutinesLen[msg.sender]++;
+
         _participateRoutines[msg.sender].push(id);
         _routineParticipants[id].push(msg.sender);
     }
@@ -249,7 +301,7 @@ contract MerkleRoutine {
     }
 
     function routinNumByAddress(address user) public view returns (uint256) {
-        return _participateRoutines[user].length;
+        return _participateRoutinesLen[user];
     }
 
     function routineStatusById(uint256 id) public view returns (Status) {
