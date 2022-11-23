@@ -47,7 +47,6 @@ contract MerkleRoutine {
     mapping(address => uint256[]) private _participateRoutines; // 참가한 루틴id
     mapping(uint256 => address[]) private _routineParticipants; // 참가자 목록
     mapping(address => uint256) private _participateRoutinesLen;
-    mapping(uint256 => uint256) private _routineParticipantsLen;
 
     /**
      * @dev Owner Make Routine, and Recruiting Participants
@@ -59,11 +58,12 @@ contract MerkleRoutine {
             msg.value,
             Status.Recruiting,
             _term,
-            1,
-            1,
-            msg.value
+            0,
+            0,
+            0
         );
         _addRoutine(routine);
+        _participateRoutine(_totalBalance - 1);
         return _totalBalance - 1;
     }
 
@@ -80,7 +80,7 @@ contract MerkleRoutine {
             _routines[id].status == Status.Recruiting,
             "STATUS ERROR : The Routine Is Not Recruiting."
         );
-        for (uint256 i = 0; i < _routineParticipantsLen[id]; i++) {
+        for (uint256 i = 0; i < _routines[id].participates; i++) {
             payable(_routineParticipants[id][i]).transfer(_routines[id].fee);
         }
         _cancelRoutine(id);
@@ -161,13 +161,17 @@ contract MerkleRoutine {
 
         uint256 OwnersAwards = (A * (body - head)) / body;
 
-        payable(_routineOwner[id]).transfer(OwnersAwards);
-
         uint256 participantsAwards = (_routines[id].amount - OwnersAwards) /
             (_routines[id].participates - 1);
 
-        for (uint256 i = 0; i < _routines[id].participates - 1; i++) {
-            payable(_routineParticipants[id][i]).transfer(participantsAwards);
+        for (uint256 i = 0; i < _routines[id].participates; i++) {
+            if (_routineParticipants[id][i] != _routineOwner[id]) {
+                payable(_routineParticipants[id][i]).transfer(
+                    participantsAwards
+                );
+                continue;
+            }
+            payable(_routineOwner[id]).transfer(OwnersAwards);
         }
         _routines[id].status = Status.End;
     }
@@ -187,7 +191,6 @@ contract MerkleRoutine {
         _popParticipateRoutine(id, addr);
         _popRoutineParticipant(id, addr);
         _routines[id].participates--;
-        _routineParticipantsLen[id]--;
     }
 
     function _cancelParticipateRoutine(uint256 id) private {
@@ -219,7 +222,7 @@ contract MerkleRoutine {
         view
         returns (bool)
     {
-        for (uint256 i = 0; i < _routineParticipantsLen[id]; i++) {
+        for (uint256 i = 0; i < _routines[id].participates; i++) {
             if (_routineParticipants[id][i] == addr) {
                 return true;
             }
@@ -249,7 +252,7 @@ contract MerkleRoutine {
     {
         uint256 index = 0;
         require(_isExistParticipant(id, addr), "Participant Is Not Exist.");
-        for (uint256 i = 0; i < _routineParticipantsLen[id]; i++) {
+        for (uint256 i = 0; i < _routines[id].participates; i++) {
             if (_routineParticipants[id][i] == addr) {
                 index = i;
             }
@@ -271,15 +274,14 @@ contract MerkleRoutine {
         uint256 index = _indexOfParticipantFromId(id, addr);
 
         _routineParticipants[id][index] = _routineParticipants[id][
-            _routineParticipantsLen[id] - 1
+            _routines[id].participates - 1
         ];
-        delete _routineParticipants[id][_routineParticipantsLen[id] - 1];
+        delete _routineParticipants[id][_routines[id].participates - 1];
     }
 
     function _participateRoutine(uint256 id) private {
         _routines[id].amount += msg.value;
         _routines[id].participates++;
-        _routineParticipantsLen[id]++;
         _routines[id].totalParticipates++;
         _participateRoutinesLen[msg.sender]++;
 

@@ -72,7 +72,7 @@ contract("MerkleRoutine", (accounts) => {
         const routine = await merkleRoutineInstance.routineById.call(routineId);
         const expectedParticipates=2;
         const expectedAmount=expectedFee*2;
-        var participant = await merkleRoutineInstance.participantOfRoutineByIndex.call(routineId,0);
+        var participant = await merkleRoutineInstance.participantOfRoutineByIndex.call(routineId,1);
 
         assert.equal(
             routine.participates,
@@ -100,7 +100,7 @@ contract("MerkleRoutine", (accounts) => {
         const routine = await merkleRoutineInstance.routineById.call(routineId);
         const expectedParticipates=3;
         const expectedAmount=expectedFee*3;
-        const participant = await merkleRoutineInstance.participantOfRoutineByIndex.call(routineId,1);
+        const participant = await merkleRoutineInstance.participantOfRoutineByIndex.call(routineId,2);
         assert.equal(
             routine.participates,
             expectedParticipates,
@@ -207,7 +207,7 @@ contract("MerkleRoutine", (accounts) => {
         const routine = await merkleRoutineInstance.routineById.call(routineId);
         const expectedParticipates=2;
         const expectedAmount=expectedFee*2;
-        var participant = await merkleRoutineInstance.participantOfRoutineByIndex.call(routineId,0);
+        var participant = await merkleRoutineInstance.participantOfRoutineByIndex.call(routineId,1);
 
         assert.equal(
             routine.participates,
@@ -235,7 +235,7 @@ contract("MerkleRoutine", (accounts) => {
         const routine = await merkleRoutineInstance.routineById.call(routineId);
         const expectedParticipates=3;
         const expectedAmount=expectedFee*3;
-        const participant = await merkleRoutineInstance.participantOfRoutineByIndex.call(routineId,1);
+        const participant = await merkleRoutineInstance.participantOfRoutineByIndex.call(routineId,2);
         assert.equal(
             routine.participates,
             expectedParticipates,
@@ -262,7 +262,7 @@ contract("MerkleRoutine", (accounts) => {
         const routine = await merkleRoutineInstance.routineById.call(routineId);
         const expectedParticipates=4;
         const expectedAmount=expectedFee*4;
-        const participant = await merkleRoutineInstance.participantOfRoutineByIndex.call(routineId,2);
+        const participant = await merkleRoutineInstance.participantOfRoutineByIndex.call(routineId,3);
         assert.equal(
             routine.participates,
             expectedParticipates,
@@ -290,7 +290,7 @@ contract("MerkleRoutine", (accounts) => {
         const routine = await merkleRoutineInstance.routineById.call(routineId);
         const expectedParticipates=5;
         const expectedAmount=expectedFee*5;
-        const participant = await merkleRoutineInstance.participantOfRoutineByIndex.call(routineId,3);
+        const participant = await merkleRoutineInstance.participantOfRoutineByIndex.call(routineId,4);
         assert.equal(
             routine.participates,
             expectedParticipates,
