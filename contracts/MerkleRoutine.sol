@@ -133,6 +133,10 @@ contract MerkleRoutine {
             _routineOwner[id] == msg.sender,
             "PERMISSION ERROR : You Don't Have Permission."
         );
+        require(
+            _routines[id].status == Status.Recruiting,
+            "STATUS ERROR : Status is Not Ongoing."
+        );
         _routines[id].status = Status.Ongoing;
     }
 

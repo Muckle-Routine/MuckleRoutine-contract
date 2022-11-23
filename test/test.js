@@ -424,4 +424,243 @@ contract("MerkleRoutine", (accounts) => {
 
     });
 
+
+    it("4-1. Create", async () => {
+
+        console.log("4. Simulation3 ( Owner's Fail ) ");
+        const merkleRoutineInstance = await MerkleRoutine.deployed();
+        const routineId = 2;
+        const expectedTerm=1;
+
+        await merkleRoutineInstance.createRoutine(expectedTerm, { from: accounts[0], value:expectedFee })
+        const routine = await merkleRoutineInstance.routineById.call(routineId);
+        const expectedStatus=0;
+        const expectedParticipates=1;
+        const expectedAmount=expectedFee;
+        const owner = await merkleRoutineInstance.ownerOfRoutine.call(routineId);
+
+        assert.equal(
+            routine.fee,
+            expectedFee,
+            "Routine's Fee is Wrong"
+        );
+        assert.equal(
+            routine.status,
+            expectedStatus,
+            "Routine's Status is Wrong"
+        );
+        assert.equal(
+            routine.term,
+            expectedTerm,
+            "Routine's Term is Wrong"
+        );
+        assert.equal(
+            routine.participates,
+            expectedParticipates,
+            "Routine's Participates is Wrong"
+        );
+        assert.equal(
+            routine.amount,
+            expectedAmount,
+            "Routine's Amount is Wrong"
+        );
+        assert.equal(
+            owner,
+            accounts[0],
+            "Owner's Address is Wrong"
+        );
+    });
+    it("4-2. Participate First User", async () => {
+        const merkleRoutineInstance = await MerkleRoutine.deployed();
+        const routineId = 2;
+        
+        await merkleRoutineInstance.participateRoutine(routineId, { from: accounts[1], value:expectedFee })
+        const routine = await merkleRoutineInstance.routineById.call(routineId);
+        const expectedParticipates=2;
+        const expectedAmount=expectedFee*2;
+        var participant = await merkleRoutineInstance.participantOfRoutineByIndex.call(routineId,1);
+
+        assert.equal(
+            routine.participates,
+            expectedParticipates,
+            "Routine's Participates is Wrong"
+        );
+        assert.equal(
+            routine.amount,
+            expectedAmount,
+            "Routine's Amount is Wrong"
+        );
+        assert.equal(
+            participant,
+            accounts[1],
+            "Participant1's Address is Wrong"
+        );
+    });
+
+    it("4-3. Participate Second User", async () => {
+        const merkleRoutineInstance = await MerkleRoutine.deployed();
+        const routineId = 2;
+
+        await merkleRoutineInstance.participateRoutine(routineId, { from: accounts[2], value:expectedFee })
+  
+        const routine = await merkleRoutineInstance.routineById.call(routineId);
+        const expectedParticipates=3;
+        const expectedAmount=expectedFee*3;
+        const participant = await merkleRoutineInstance.participantOfRoutineByIndex.call(routineId,2);
+        assert.equal(
+            routine.participates,
+            expectedParticipates,
+            "Routine's Participates is Wrong"
+        );
+        assert.equal(
+            routine.amount,
+            expectedAmount,
+            "Routine's Amount is Wrong"
+        );
+        assert.equal(
+            participant,
+            accounts[2],
+            "Participant2's Address is Wrong"
+        );
+    });
+
+    it("4-4. Participate Third User", async () => {
+        const merkleRoutineInstance = await MerkleRoutine.deployed();
+        const routineId = 2;
+
+        await merkleRoutineInstance.participateRoutine(routineId, { from: accounts[3], value:expectedFee })
+  
+        const routine = await merkleRoutineInstance.routineById.call(routineId);
+        const expectedParticipates=4;
+        const expectedAmount=expectedFee*4;
+        const participant = await merkleRoutineInstance.participantOfRoutineByIndex.call(routineId,3);
+        assert.equal(
+            routine.participates,
+            expectedParticipates,
+            "Routine's Participates is Wrong"
+        );
+        assert.equal(
+            routine.amount,
+            expectedAmount,
+            "Routine's Amount is Wrong"
+        );
+        assert.equal(
+            participant,
+            accounts[3],
+            "Participant3's Address is Wrong"
+        );
+    });
+
+
+    it("4-5. Participate Fourth User", async () => {
+        const merkleRoutineInstance = await MerkleRoutine.deployed();
+        const routineId = 2;
+
+        await merkleRoutineInstance.participateRoutine(routineId, { from: accounts[4], value:expectedFee })
+  
+        const routine = await merkleRoutineInstance.routineById.call(routineId);
+        const expectedParticipates=5;
+        const expectedAmount=expectedFee*5;
+        const participant = await merkleRoutineInstance.participantOfRoutineByIndex.call(routineId,4);
+        assert.equal(
+            routine.participates,
+            expectedParticipates,
+            "Routine's Participates is Wrong"
+        );
+        assert.equal(
+            routine.amount,
+            expectedAmount,
+            "Routine's Amount is Wrong"
+        );
+        assert.equal(
+            participant,
+            accounts[4],
+            "Participant4's Address is Wrong"
+        );
+    });
+
+    it("4-7. Start Routine", async () => {
+        const merkleRoutineInstance = await MerkleRoutine.deployed();
+        const routineId = 2;
+        await merkleRoutineInstance.startRoutine(routineId, { from: accounts[0] });
+
+        const routineStatus = await merkleRoutineInstance.routineStatusById.call(routineId);
+        
+        assert.equal(
+            routineStatus,
+            1,
+            "Routine's Status Is Not Ongoing"
+        );
+    });
+
+    it("4-8. Owner Fails Routine", async () => {
+        const merkleRoutineInstance = await MerkleRoutine.deployed();
+        const routineId = 2;
+
+        const expectParticipates = encodeBNtoNumber(await merkleRoutineInstance.participantNumById.call(routineId))-1;
+        const expectRoutinNumOfUser = Number((await merkleRoutineInstance.routinNumByAddress.call(accounts[0])).words[0])-1;
+
+        await merkleRoutineInstance.failRoutine(accounts[0], routineId, { from: accounts[0] });
+
+        const participates = encodeBNtoNumber(await merkleRoutineInstance.participantNumById.call(routineId));
+        const routinNumOfUser = Number((await merkleRoutineInstance.routinNumByAddress.call(accounts[0])).words[0]);
+
+        assert.equal(
+            participates,
+            expectParticipates,
+            "Participatnt's Num is Wrong"
+        );
+        assert.equal(
+            routinNumOfUser,
+            expectRoutinNumOfUser,
+            "Routine Number Was Not Decrease"
+        );
+    });
+
+
+    it("4-9. End Routine And Prize Distribution", async () => {
+        const merkleRoutineInstance = await MerkleRoutine.deployed();
+        const routineId = 2;
+        const expectBalanceOfOwner = Number(await web3.eth.getBalance(accounts[0]));
+        const expectBalanceOfFirst = Number(await web3.eth.getBalance(accounts[1]))+1200000000000000000;
+        const expectBalanceOfSecond = Number(await web3.eth.getBalance(accounts[2]))+1200000000000000000;
+        const expectBalanceOfThird = Number(await web3.eth.getBalance(accounts[3]))+1200000000000000000;
+        const expectBalanceOfFourth = Number(await web3.eth.getBalance(accounts[4]))+1200000000000000000;
+
+        await merkleRoutineInstance.endRoutine(routineId, { from: accounts[0] });
+        
+        const balanceOfOwner = Number(await web3.eth.getBalance(accounts[0]));
+        const balanceOfFirst = Number(await web3.eth.getBalance(accounts[1]));
+        const balanceOfSecond = Number(await web3.eth.getBalance(accounts[2]));
+        const balanceOfThird = Number(await web3.eth.getBalance(accounts[3]));
+        const balanceOfFourth = Number(await web3.eth.getBalance(accounts[4]));
+
+        assert.equal(
+            equlExceptGas(expectBalanceOfOwner,balanceOfOwner),
+            true,
+            "Owner's Balance is Wrong"
+        );
+
+        assert.equal(
+            balanceOfFirst,
+            expectBalanceOfFirst,
+            "First User's Balance is Wrong"
+        );
+        assert.equal(
+            balanceOfSecond,
+            expectBalanceOfSecond,
+            "Second User's Balance is Wrong"
+        );
+        assert.equal(
+            balanceOfThird,
+            expectBalanceOfThird,
+            "Third User's Balance is Wrong"
+        );
+        assert.equal(
+            balanceOfFourth,
+            expectBalanceOfFourth,
+            "Fourth User's Balance is Wrong"
+        );
+
+    });
 });
