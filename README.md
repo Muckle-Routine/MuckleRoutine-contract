@@ -1,5 +1,29 @@
 # Smart Contract
 
+## Info
+
+**contract address** : `0x534C0ED9452d64e535c172D16344856c7539f7d7`
+
+**abi** : [build/contracts/MerkleRoutin.json](./build/contracts/MerkleRoutine.json)
+
+**deploy info**
+
+```shell
+Deploying 'MerkleRoutine'
+   -------------------------
+   > transaction hash:    0x5b4351937d05b33a8c922c6f773c40fdef13724b856fcd87587c86427825a68c
+   > Blocks: 0            Seconds: 0
+   > contract address:    0x534C0ED9452d64e535c172D16344856c7539f7d7
+   > block number:        107514633
+   > block timestamp:     1669420496
+   > account:             0xbC14CB49b93Ee36AfdF4b49eCB7C9512f9353c93
+   > balance:             4.8432099500051
+   > gas used:            3247721 (0x318e69)
+   > gas price:           50 gwei
+   > value sent:          0 ETH
+   > total cost:          0.16238605 ETH
+```
+
 ## Todo
 
 ### SEND
@@ -21,6 +45,10 @@
        루틴 종료 : 루틴이 종료되고 성공한 참가자들에게 상금을 분배합니다.
 7. [x] failRoutine (address)
        루틴 실패
+8. [ ] updateRefreeHistory
+       레프리 기록 업로드
+
+9. [ ]
 
 ### CALL
 

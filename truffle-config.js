@@ -41,10 +41,12 @@
  * https://trufflesuite.com/docs/truffle/getting-started/using-the-truffle-dashboard/
  */
 
-// require('dotenv').config();
+require('dotenv').config();
 // const { MNEMONIC, PROJECT_ID } = process.env;
 
 // const HDWalletProvider = require('@truffle/hdwallet-provider');
+const HDWalletProvider = require('truffle-hdwallet-provider-klaytn');
+const privateKey = process.env.PRIVATEKEY;
 
 module.exports = {
   /**
@@ -58,6 +60,22 @@ module.exports = {
    */
 
   networks: {
+    baobab: {
+      provider: () => {
+        return new HDWalletProvider(privateKey, "https://api.baobab.klaytn.net:8651");
+      },
+      network_id: "1001", //Klaytn baobab testnet's network id
+      gas: "8500000",
+      gasPrice: null,
+    },
+    cypress: {
+      provider: () => {
+        return new HDWalletProvider(privateKey, "https://klaytn03.fandom.finance/");
+      },
+      network_id: "8217", //Klaytn mainnet's network id
+      gas: "8500000",
+      gasPrice: null,
+    }
     // Useful for testing. The `development` name is special - truffle uses it by default
     // if it's defined here and no other network is specified at the command line.
     // You should run a client (like ganache, geth, or parity) in a separate terminal

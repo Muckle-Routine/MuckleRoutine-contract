@@ -1,3 +1,4 @@
+//SPDX l
 pragma solidity ^0.8.13;
 
 contract MerkleRoutine {
@@ -47,6 +48,8 @@ contract MerkleRoutine {
     mapping(address => uint256[]) private _participateRoutines; // 참가한 루틴id
     mapping(uint256 => address[]) private _routineParticipants; // 참가자 목록
     mapping(address => uint256) private _participateRoutinesLen;
+
+    //mapping(uint256 => mapping(address => uint256)) private _refrees;
 
     /**
      * @dev Owner Make Routine, and Recruiting Participants
