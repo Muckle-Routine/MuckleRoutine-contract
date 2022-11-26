@@ -161,7 +161,7 @@ contract("MerkleRoutine", (accounts) => {
         const routineId = 1;
         const expectedTerm=1;
 
-        await merkleRoutineInstance.createRoutine(expectedTerm, { from: accounts[0], value:expectedFee })
+        await merkleRoutineInstance.createRoutine(expectedTerm, { from: accounts[5], value:expectedFee })
         const routine = await merkleRoutineInstance.routineById.call(routineId);
         const expectedStatus=0;
         const expectedParticipates=1;
@@ -195,7 +195,7 @@ contract("MerkleRoutine", (accounts) => {
         );
         assert.equal(
             owner,
-            accounts[0],
+            accounts[5],
             "Owner's Address is Wrong"
         );
     });
@@ -381,15 +381,15 @@ contract("MerkleRoutine", (accounts) => {
     it("3-9. End Routine And Prize Distribution", async () => {
         const merkleRoutineInstance = await MerkleRoutine.deployed();
         const routineId = 1;
-        const expectBalanceOfOwner = Number(await web3.eth.getBalance(accounts[0]))+1500000000000000000;
+        const expectBalanceOfOwner = Number(await web3.eth.getBalance(accounts[5]))+1300000000000000000;
         const expectBalanceOfFirst = Number(await web3.eth.getBalance(accounts[1]));
         const expectBalanceOfSecond = Number(await web3.eth.getBalance(accounts[2]));
         const expectBalanceOfThird = Number(await web3.eth.getBalance(accounts[3]))+1250000000000000000;
         const expectBalanceOfFourth = Number(await web3.eth.getBalance(accounts[4]))+1250000000000000000;
-
+  
         await merkleRoutineInstance.endRoutine(routineId, { from: accounts[0] });
         
-        const balanceOfOwner = Number(await web3.eth.getBalance(accounts[0]));
+        const balanceOfOwner = Number(await web3.eth.getBalance(accounts[5]));
         const balanceOfFirst = Number(await web3.eth.getBalance(accounts[1]));
         const balanceOfSecond = Number(await web3.eth.getBalance(accounts[2]));
         const balanceOfThird = Number(await web3.eth.getBalance(accounts[3]));
@@ -432,7 +432,7 @@ contract("MerkleRoutine", (accounts) => {
         const routineId = 2;
         const expectedTerm=1;
 
-        await merkleRoutineInstance.createRoutine(expectedTerm, { from: accounts[0], value:expectedFee })
+        await merkleRoutineInstance.createRoutine(expectedTerm, { from: accounts[5], value:expectedFee })
         const routine = await merkleRoutineInstance.routineById.call(routineId);
         const expectedStatus=0;
         const expectedParticipates=1;
@@ -466,7 +466,7 @@ contract("MerkleRoutine", (accounts) => {
         );
         assert.equal(
             owner,
-            accounts[0],
+            accounts[5],
             "Owner's Address is Wrong"
         );
     });
@@ -598,12 +598,12 @@ contract("MerkleRoutine", (accounts) => {
         const routineId = 2;
 
         const expectParticipates = encodeBNtoNumber(await merkleRoutineInstance.participantNumById.call(routineId))-1;
-        const expectRoutinNumOfUser = Number((await merkleRoutineInstance.routinNumByAddress.call(accounts[0])).words[0])-1;
+        const expectRoutinNumOfUser = Number((await merkleRoutineInstance.routinNumByAddress.call(accounts[5])).words[0])-1;
 
-        await merkleRoutineInstance.failRoutine(accounts[0], routineId, { from: accounts[0] });
+        await merkleRoutineInstance.failRoutine(accounts[5], routineId, { from: accounts[0] });
 
         const participates = encodeBNtoNumber(await merkleRoutineInstance.participantNumById.call(routineId));
-        const routinNumOfUser = Number((await merkleRoutineInstance.routinNumByAddress.call(accounts[0])).words[0]);
+        const routinNumOfUser = Number((await merkleRoutineInstance.routinNumByAddress.call(accounts[5])).words[0]);
 
         assert.equal(
             participates,
@@ -617,24 +617,37 @@ contract("MerkleRoutine", (accounts) => {
         );
     });
 
-
-    it("4-9. End Routine And Prize Distribution", async () => {
+    it("4-9. Owner Fails Routine", async () => {
         const merkleRoutineInstance = await MerkleRoutine.deployed();
         const routineId = 2;
-        const expectBalanceOfOwner = Number(await web3.eth.getBalance(accounts[0]));
-        const expectBalanceOfFirst = Number(await web3.eth.getBalance(accounts[1]))+1200000000000000000;
-        const expectBalanceOfSecond = Number(await web3.eth.getBalance(accounts[2]))+1200000000000000000;
-        const expectBalanceOfThird = Number(await web3.eth.getBalance(accounts[3]))+1200000000000000000;
-        const expectBalanceOfFourth = Number(await web3.eth.getBalance(accounts[4]))+1200000000000000000;
+
+        await merkleRoutineInstance.verifyCertificate([2], [accounts[6]], [3], { from: accounts[0] });
+
+
+
+    });
+
+
+    it("4-10. End Routine And Prize Distribution", async () => {
+        const merkleRoutineInstance = await MerkleRoutine.deployed();
+        const routineId = 2;
+        const expectBalanceOfOwner = Number(await web3.eth.getBalance(accounts[5]));
+        const expectBalanceOfFirst = Number(await web3.eth.getBalance(accounts[1]))+1192000000000000000;
+        const expectBalanceOfSecond = Number(await web3.eth.getBalance(accounts[2]))+1192000000000000000;
+        const expectBalanceOfThird = Number(await web3.eth.getBalance(accounts[3]))+1192000000000000000;
+        const expectBalanceOfFourth = Number(await web3.eth.getBalance(accounts[4]))+1192000000000000000;
+        const expectBalanceOfRefree = Number(await web3.eth.getBalance(accounts[6]))+200000000000000000;
 
         await merkleRoutineInstance.endRoutine(routineId, { from: accounts[0] });
         
-        const balanceOfOwner = Number(await web3.eth.getBalance(accounts[0]));
+        const balanceOfOwner = Number(await web3.eth.getBalance(accounts[5]));
         const balanceOfFirst = Number(await web3.eth.getBalance(accounts[1]));
         const balanceOfSecond = Number(await web3.eth.getBalance(accounts[2]));
         const balanceOfThird = Number(await web3.eth.getBalance(accounts[3]));
         const balanceOfFourth = Number(await web3.eth.getBalance(accounts[4]));
+        const balanceOfRefree = Number(await web3.eth.getBalance(accounts[6]));
 
+    
         assert.equal(
             equlExceptGas(expectBalanceOfOwner,balanceOfOwner),
             true,
@@ -660,6 +673,11 @@ contract("MerkleRoutine", (accounts) => {
             balanceOfFourth,
             expectBalanceOfFourth,
             "Fourth User's Balance is Wrong"
+        );
+        assert.equal(
+            balanceOfRefree,
+            expectBalanceOfRefree,
+            "Refree User's Balance is Wrong"
         );
 
     });

@@ -33,7 +33,7 @@ Deploying 'MerkleRoutine'
 
 1. [x] createRoutine (Routine)
        루틴 생성 : 챌린지 주최자가 챌린지를 생성하고 온체인에 등록합니다.
-2. [x] deleteRoutine (id)
+2. [x] deleteRoutine (id) -- 안씀
        루틴 취소 : 주최자가 챌린지를 취소합니다. 챌린지가 시작되기 전에만 실행가능하고 주최자만
        실행가능합니다. 모인 참가비는 참가자들에게 다시 분배됩니다.
 3. [x] participateRoutine (id), value로 fee 지불
@@ -48,10 +48,8 @@ Deploying 'MerkleRoutine'
        루틴 종료 : 루틴이 종료되고 성공한 참가자들에게 상금을 분배합니다.
 7. [x] failRoutine (address)
        루틴 실패
-8. [ ] updateRefreeHistory
+8. [x] updateRefreeHistory
        레프리 기록 업로드
-
-9. [ ]
 
 ### CALL
 

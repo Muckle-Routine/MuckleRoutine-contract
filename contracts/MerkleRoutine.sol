@@ -47,9 +47,10 @@ contract MerkleRoutine {
     mapping(uint256 => address) private _routineOwner; // 루틴의 주최자 지갑주소
     mapping(address => uint256[]) private _participateRoutines; // 참가한 루틴id
     mapping(uint256 => address[]) private _routineParticipants; // 참가자 목록
-    mapping(address => uint256) private _participateRoutinesLen;
-
-    //mapping(uint256 => mapping(address => uint256)) private _refrees;
+    mapping(address => uint256) private _participateRoutinesLen; //
+    mapping(uint256 => mapping(address => uint256)) private _refrees; // 각 검증자들이 몇 번 검증했는지
+    mapping(uint256 => uint256) private _totalRefrees; // 검증 수
+    address[] private _refreesNum; // 레프리의 수
 
     /**
      * @dev Owner Make Routine, and Recruiting Participants
@@ -133,7 +134,7 @@ contract MerkleRoutine {
 
     function startRoutine(uint256 id) public payable {
         require(
-            _routineOwner[id] == msg.sender,
+            manager == msg.sender,
             "PERMISSION ERROR : You Don't Have Permission."
         );
         require(
@@ -155,32 +156,91 @@ contract MerkleRoutine {
         _deletePariticipant(id, addr);
     }
 
+    function verifyCertificate(
+        uint256[] memory ids,
+        address[] memory addrs,
+        uint256[] memory nums
+    ) public {
+        require(_checkAllIds(ids), "STATUS ERROR : The Routine Is Not Ongoing");
+        for (uint256 i = 0; i < ids.length; i++) {
+            _addRefrees(ids[i], addrs[i], nums[i]);
+        }
+    }
+
+    function _checkAllIds(uint256[] memory ids) private view returns (bool) {
+        for (uint256 i = 0; i < ids.length; i++) {
+            if (_routines[ids[i]].status != Status.Ongoing) {
+                return false;
+            }
+        }
+        return true;
+    }
+
     function endRoutine(uint256 id) public {
         require(
             msg.sender == manager,
             "PERMISSION ERROR : You Don't Have Permission."
         );
+        uint256 OwnersAwards = _caculateOwnerAwards(id);
+        uint256 participantsAwards = _calculateParticipantsAwards(
+            id,
+            OwnersAwards
+        );
+
+        for (uint256 i = 0; i < _routines[id].participates; i++) {
+            if (_routineParticipants[id][i] != _routineOwner[id]) {
+                payable(_routineParticipants[id][i]).transfer(
+                    _routines[id].fee + participantsAwards
+                );
+                continue;
+            }
+            payable(_routineOwner[id]).transfer(
+                _routines[id].fee + OwnersAwards
+            );
+        }
+
+        for (uint256 i = 0; i < _refreesNum.length; i++) {
+            payable(_refreesNum[i]).transfer(
+                _calculateRefreesAwards(id, _refreesNum[i])
+            );
+        }
+
+        _routines[id].status = Status.End;
+    }
+
+    function _caculateOwnerAwards(uint256 id) public view returns (uint256) {
         uint256 A = _routines[id].amount;
         uint256 N = _routines[id].totalParticipates;
         uint256 S = _routines[id].participates;
         uint256 head = ((N + 1) * (S - 1));
         uint256 body = (N * (S + 1));
+        uint256 surplus = A - (S * _routines[id].fee);
 
-        uint256 OwnersAwards = (A * (body - head)) / body;
+        uint256 OwnersAwards = (4 * surplus * (body - head)) / (5 * body);
+        return OwnersAwards;
+    }
 
-        uint256 participantsAwards = (_routines[id].amount - OwnersAwards) /
+    function _calculateParticipantsAwards(uint256 id, uint256 OwnersAwards)
+        public
+        view
+        returns (uint256)
+    {
+        uint256 surplus = _routines[id].amount -
+            (_routines[id].participates * _routines[id].fee);
+        uint256 amount = (surplus * 4) / 5;
+        uint256 participantsAwards = (amount - OwnersAwards) /
             (_routines[id].participates - 1);
+        return participantsAwards;
+    }
 
-        for (uint256 i = 0; i < _routines[id].participates; i++) {
-            if (_routineParticipants[id][i] != _routineOwner[id]) {
-                payable(_routineParticipants[id][i]).transfer(
-                    participantsAwards
-                );
-                continue;
-            }
-            payable(_routineOwner[id]).transfer(OwnersAwards);
-        }
-        _routines[id].status = Status.End;
+    function _calculateRefreesAwards(uint256 id, address addr)
+        public
+        view
+        returns (uint256)
+    {
+        uint256 surplus = _routines[id].amount -
+            (_routines[id].participates * _routines[id].fee);
+        return (surplus * _refrees[id][addr]) / (5 * _totalRefrees[id]);
     }
 
     /**
@@ -299,6 +359,18 @@ contract MerkleRoutine {
     function _cancelRoutine(uint256 id) private {
         _routines[id].amount = 0;
         _routines[id].status = Status.Cancellation;
+    }
+
+    function _addRefrees(
+        uint256 id,
+        address addr,
+        uint256 num
+    ) private {
+        if (_refrees[id][addr] == 0) {
+            _refreesNum.push(addr);
+        }
+        _refrees[id][addr] += num;
+        _totalRefrees[id] += num;
     }
 
     function routineTotalBalance() public view returns (uint256) {
