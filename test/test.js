@@ -26,13 +26,16 @@ contract("MerkleRoutine", (accounts) => {
         const routineId = 0;
         const expectedTerm=1;
 
-        await merkleRoutineInstance.createRoutine(expectedTerm, { from: accounts[0], value:expectedFee })
+        const routinIndex = await merkleRoutineInstance.createRoutine(expectedTerm, { from: accounts[0], value:expectedFee })
+        console.log(routinIndex.logs);
+
         const routine = await merkleRoutineInstance.routineById.call(routineId);
         const expectedStatus=0;
         const expectedParticipates=1;
         const expectedAmount=expectedFee;
         const owner = await merkleRoutineInstance.ownerOfRoutine.call(routineId);
 
+        
         assert.equal(
             routine.fee,
             expectedFee,
@@ -161,7 +164,8 @@ contract("MerkleRoutine", (accounts) => {
         const routineId = 1;
         const expectedTerm=1;
 
-        await merkleRoutineInstance.createRoutine(expectedTerm, { from: accounts[5], value:expectedFee })
+        const routinIndex = await merkleRoutineInstance.createRoutine(expectedTerm, { from: accounts[5], value:expectedFee });
+        console.log(routinIndex.logs);
         const routine = await merkleRoutineInstance.routineById.call(routineId);
         const expectedStatus=0;
         const expectedParticipates=1;
@@ -646,7 +650,7 @@ contract("MerkleRoutine", (accounts) => {
         const balanceOfThird = Number(await web3.eth.getBalance(accounts[3]));
         const balanceOfFourth = Number(await web3.eth.getBalance(accounts[4]));
         const balanceOfRefree = Number(await web3.eth.getBalance(accounts[6]));
-
+        
     
         assert.equal(
             equlExceptGas(expectBalanceOfOwner,balanceOfOwner),

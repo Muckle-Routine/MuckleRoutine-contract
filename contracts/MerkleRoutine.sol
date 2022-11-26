@@ -52,11 +52,13 @@ contract MerkleRoutine {
     mapping(uint256 => uint256) private _totalRefrees; // 검증 수
     address[] private _refreesNum; // 레프리의 수
 
+    event CreateRoutine(uint256 id);
+
     /**
      * @dev Owner Make Routine, and Recruiting Participants
      * @param _term Certificate Term
      */
-    function createRoutine(Term _term) public payable returns (uint256) {
+    function createRoutine(Term _term) public payable {
         require(msg.value > 0, "FEE ERROR : You Have To Pay A Fee");
         Routine memory routine = Routine(
             msg.value,
@@ -68,7 +70,7 @@ contract MerkleRoutine {
         );
         _addRoutine(routine);
         _participateRoutine(_totalBalance - 1);
-        return _totalBalance - 1;
+        emit CreateRoutine(_totalBalance - 1);
     }
 
     /**
@@ -162,6 +164,10 @@ contract MerkleRoutine {
         uint256[] memory nums
     ) public {
         require(_checkAllIds(ids), "STATUS ERROR : The Routine Is Not Ongoing");
+        require(
+            !_checkAllAddr(ids, addrs),
+            "EXIST ERROR : The Address Is Exist In The Routine"
+        );
         for (uint256 i = 0; i < ids.length; i++) {
             _addRefrees(ids[i], addrs[i], nums[i]);
         }
@@ -170,6 +176,19 @@ contract MerkleRoutine {
     function _checkAllIds(uint256[] memory ids) private view returns (bool) {
         for (uint256 i = 0; i < ids.length; i++) {
             if (_routines[ids[i]].status != Status.Ongoing) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    function _checkAllAddr(uint256[] memory ids, address[] memory addrs)
+        private
+        view
+        returns (bool)
+    {
+        for (uint256 i = 0; i < addrs.length; i++) {
+            if (!_isExistParticipant(ids[i], addrs[i])) {
                 return false;
             }
         }

@@ -2,7 +2,7 @@
 
 ## Info
 
-**contract address** : `0x534C0ED9452d64e535c172D16344856c7539f7d7`
+**contract address** : `0x23ce138d420b0A73a9B0c2e4aa428f8D1eF32A3d`
 
 **abi** : [build/contracts/MerkleRoutin.json](./build/contracts/MerkleRoutine.json)
 
