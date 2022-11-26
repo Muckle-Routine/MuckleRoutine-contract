@@ -24,6 +24,9 @@ Deploying 'MerkleRoutine'
    > total cost:          0.16238605 ETH
 ```
 
+**test**
+![](./doc/img/test.png)
+
 ## Todo
 
 ### SEND
